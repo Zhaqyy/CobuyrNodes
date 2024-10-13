@@ -45,7 +45,7 @@ export function Nodes({ children }) {
   const [nodes, set] = useState([]);
   const lines = useMemo(() => {
     const lines = [];
-    for (let node of nodes)
+    for (let node of nodes) {
       node.connectedTo
         .map((ref) => [node.position, ref.current.position])
         .forEach(([start, end]) =>
@@ -54,21 +54,24 @@ export function Nodes({ children }) {
             end: end.clone().add({ x: -0.4, y: 0, z: 0 }),
           })
         );
+    }
     return lines;
   }, [nodes]);
+
   useFrame((_, delta) =>
     group.current.children.forEach(
       (group) =>
         (group.children[0].material.uniforms.dashOffset.value -= delta * 10)
     )
   );
+
   return (
     <context.Provider value={set}>
       <group ref={group}>
         {lines.map((line, index) => (
-          <group>
+          <group key={`line-${index}`}>
             <QuadraticBezierLine
-              key={index}
+              key={`dashed-line-${index}`}
               {...line}
               color="white"
               dashed
@@ -76,7 +79,7 @@ export function Nodes({ children }) {
               gapSize={20}
             />
             <QuadraticBezierLine
-              key={index}
+              key={`solid-line-${index}`}
               {...line}
               color="white"
               lineWidth={0.5}
@@ -86,9 +89,11 @@ export function Nodes({ children }) {
           </group>
         ))}
       </group>
+
       {children}
+
       {lines.map(({ start, end }, index) => (
-        <group key={index} position-z={-1}>
+        <group key={`circle-group-${index}`} position-z={-1}>
           <Circle position={start} color={"#ffffff"} />
           <Circle position={end} color={"#ffffff"} />
         </group>
@@ -96,6 +101,7 @@ export function Nodes({ children }) {
     </context.Provider>
   );
 }
+
 
 // the node logic
 
