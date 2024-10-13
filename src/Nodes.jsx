@@ -15,6 +15,7 @@ import { useDrag } from "@use-gesture/react";
 
 const context = createContext();
 
+// circle component
 const Circle = forwardRef(
   (
     {
@@ -104,7 +105,6 @@ export function Nodes({ children }) {
 
 
 // the node logic
-
 export const Node = forwardRef(
   (
     {
@@ -150,19 +150,19 @@ export const Node = forwardRef(
       );
     });
 
+    const viewport = useThree((state) => state.viewport)
+    // Repulsion logic
+    useFrame(() => {
+      const nodes = ref.current.parent.children; // Get all sibling nodes
 
-    // useEffect(() => {
-    //   if (ref.current) {
-    //     applyRepulsion(ref.current.parent.children, ref.current);
-    //   }
-    // }, []);
+      // Apply repulsion between the current node and all other nodes
+      if (ref.current) {
+        applyRepulsion(nodes, ref.current); // Apply repulsion
+        ref.current.position.copy(clampPosition(ref.current.position, viewport)); // Clamp position to screen
+      }
+    });
 
-// Repulsion logic
-useFrame(() => {
-  if (ref.current) {
-    applyRepulsion(ref.current.parent.children, ref.current);
-  }
-});
+
     return (
       <group
         ref={ref}
@@ -220,8 +220,9 @@ useFrame(() => {
     );
   }
 );
-// Apply repulsion logic
-function applyRepulsion(nodes, currentNode, threshold = 0.9) {
+
+// Apply repulsion logic to avoid overlapping nodes
+function applyRepulsion(nodes, currentNode, threshold = 0.8) {
   for (let otherNode of nodes) {
     if (otherNode !== currentNode) {
       const currentPosition = currentNode.position;
@@ -230,9 +231,21 @@ function applyRepulsion(nodes, currentNode, threshold = 0.9) {
       const distance = currentPosition.distanceTo(otherPosition);
       if (distance < threshold) {
         const direction = currentPosition.clone().sub(otherPosition).normalize();
-        const repulsionForce = direction.multiplyScalar(0.05); // Strength of the repulsion
-        currentNode.position.add(repulsionForce);
+        const repulsionForce = direction.multiplyScalar(0.1); // Repulsion force
+        currentNode.position.add(repulsionForce); // Push currentNode away from otherNode
       }
     }
   }
+}
+
+// Function to clamp position within the viewport bounds
+function clampPosition(position, viewport) {
+  const minX = -viewport.width / 2;
+  const maxX = viewport.width / 2;
+  const minY = -viewport.height / 2;
+  const maxY = viewport.height / 2;
+
+  position.x = Math.max(minX, Math.min(maxX, position.x));
+  position.y = Math.max(minY, Math.min(maxY, position.y));
+  return position;
 }
